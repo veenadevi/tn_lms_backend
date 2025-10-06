@@ -7,10 +7,12 @@ const router = express.Router()
 /* Get all books in the db */
 router.get("/allbooks", async (req, res) => {
     try {
-        const books = await Book.find({}).populate("transactions").sort({ _id: -1 })
-        res.status(200).json(books)
-    }
-    catch (err) {
+        const books = await Book.find({})
+            .populate("transactions")
+            .populate("categories")
+            .sort({ _id: -1 });
+        res.status(200).json(books);
+    } catch (err) {
         return res.status(504).json(err);
     }
 })
@@ -42,8 +44,13 @@ router.get("/", async (req, res) => {
 router.post("/addbook", async (req, res) => {
     if (req.body.isAdmin) {
         try {
+            // Find the largest bookId
+            const lastBook = await Book.findOne({}, {}, { sort: { bookId: -1 } });
+            console.log("lastBook  ",lastBook);
+            const nextBookId = lastBook && lastBook.bookId ? lastBook.bookId + 1 : 1;
             const newbook = await new Book({
                 bookName: req.body.bookName,
+                bookId: nextBookId,
                 alternateTitle: req.body.alternateTitle,
                 author: req.body.author,
                 bookCountAvailable: req.body.bookCountAvailable,
@@ -52,16 +59,15 @@ router.post("/addbook", async (req, res) => {
                 publisher: req.body.publisher,
                 bookStatus: req.body.bookSatus,
                 categories: req.body.categories
-            })
-            const book = await newbook.save()
+            });
+            const book = await newbook.save();
             await BookCategory.updateMany({ '_id': book.categories }, { $push: { books: book._id } });
-            res.status(200).json(book)
+            res.status(200).json(book);
+            console("addedd",book);
+        } catch (err) {
+            res.status(504).json(err);
         }
-        catch (err) {
-            res.status(504).json(err)
-        }
-    }
-    else {
+    } else {
         return res.status(403).json("You dont have permission to delete a book!");
     }
 })
