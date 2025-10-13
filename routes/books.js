@@ -42,33 +42,112 @@ router.get("/", async (req, res) => {
 
 /* Adding book */
 router.post("/addbook", async (req, res) => {
-    if (req.body.isAdmin) {
-        try {
-            // Find the largest bookId
-            const lastBook = await Book.findOne({}, {}, { sort: { bookId: -1 } });
-            console.log("lastBook  ",lastBook);
-            const nextBookId = lastBook && lastBook.bookId ? lastBook.bookId + 1 : 1;
-            const newbook = await new Book({
-                bookName: req.body.bookName,
+   
+
+    try {
+        // Accept body as: array, { books: [...] } or single book object
+        let rawInput
+        console.log(" req.body===", req.body)
+        if (Array.isArray(req.body)) rawInput = req.body
+        else if (Array.isArray(req.body.books)) rawInput = req.body.books
+        else rawInput = [req.body]
+
+        // Capture admin flag from top-level or first item BEFORE we strip it
+        const isAdmin = req.body.isAdmin ?? rawInput[0]?.isAdmin ?? false
+
+        // Remove any isAdmin flags from individual items for safety
+        const booksInput = rawInput.map(b => {
+            const copy = { ...b }
+            delete copy.isAdmin
+            return copy
+        })
+
+        // Find the largest existing bookId
+        const lastBook = await Book.findOne({}, {}, { sort: { bookId: -1 } })
+        let nextBookId = lastBook && lastBook.bookId ? lastBook.bookId + 1 : 1
+
+        // Determine incoming names and existing duplicates
+        const incomingNames = booksInput.map(b => b.bookName).filter(Boolean)
+        const existingNames = incomingNames.length
+            ? await Book.find({ bookName: { $in: incomingNames } }).distinct('bookName')
+            : []
+        const skipped = []
+
+        console.log("booksInput.length===", booksInput.length)
+
+        if (booksInput.length === 1) {
+            const b = booksInput[0]
+
+            if (!isAdmin) {
+                return res.status(403).json("You dont have permission to add a book!");
+            }
+
+            if (existingNames.includes(b.bookName)) {
+                // Skip duplicate single book
+                return res.status(200).json({ message: 'Skipped duplicate bookName', skipped: [b.bookName] })
+            }
+
+            const newbook = new Book({
+                bookName: b.bookName,
                 bookId: nextBookId,
-                alternateTitle: req.body.alternateTitle,
-                author: req.body.author,
-                bookCountAvailable: req.body.bookCountAvailable,
-                language: req.body.language,
-                price: req.body.price,
-                publisher: req.body.publisher,
-                bookStatus: req.body.bookSatus,
-                categories: req.body.categories
-            });
-            const book = await newbook.save();
-            await BookCategory.updateMany({ '_id': book.categories }, { $push: { books: book._id } });
-            res.status(200).json(book);
-            console("addedd",book);
-        } catch (err) {
-            res.status(504).json(err);
+                alternateTitle: b.alternateTitle,
+                author: b.author,
+                bookCountAvailable: b.bookCountAvailable,
+                language: b.language,
+                bookPrice: b.bookPrice ?? b.price,
+                publisher: b.publisher,
+                bookStatus: b.bookStatus ?? b.bookSatus,
+                categories: b.categories
+            })
+            const saved = await newbook.save()
+            await BookCategory.updateMany({ '_id': saved.categories }, { $push: { books: saved._id } })
+            return res.status(200).json({ inserted: [saved], skipped: [] })
+        } else {
+            console.log("booksInput array", booksInput.length)
+            if (!isAdmin) {
+                return res.status(403).json("I dont have permission to add a book!");
+            } else {
+
+                // Filter out duplicates
+                const uniqueInputs = booksInput.filter(b => {
+                    if (!b.bookName) return false
+                    if (existingNames.includes(b.bookName)) {
+                        skipped.push(b.bookName)
+                        return false
+                    }
+                    return true
+                })
+
+                if (uniqueInputs.length === 0) {
+                    return res.status(200).json({ inserted: [], skipped })
+                }
+
+                // Multiple books
+                const docs = uniqueInputs.map(b => ({
+                    bookName: b.bookName,
+                    bookId: nextBookId++,
+                    alternateTitle: b.alternateTitle,
+                    author: b.author,
+                    bookCountAvailable: b.bookCountAvailable,
+                    language: b.language,
+                    bookPrice: b.bookPrice ?? b.price,
+                    publisher: b.publisher,
+                    bookStatus: b.bookStatus ?? b.bookSatus,
+                    categories: b.categories
+                }))
+
+                const inserted = await Book.insertMany(docs)
+
+                // Update categories for each inserted book
+                await Promise.all(
+                    inserted.map(book => BookCategory.updateMany({ '_id': book.categories }, { $push: { books: book._id } }))
+                )
+
+                return res.status(200).json({ inserted, skipped })
+            }
         }
-    } else {
-        return res.status(403).json("You dont have permission to delete a book!");
+    } catch (err) {
+        return res.status(504).json(err)
     }
 })
 

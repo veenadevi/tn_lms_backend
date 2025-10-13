@@ -7,15 +7,35 @@ const UserSchema = new mongoose.Schema({
     },
     userFullName: {
         type: String,
-        require: true,
-        unique: true
+        require: true
     },
-    admissionId: {  
+    admissionNo: {  
+        type: String,
+        min: 3,
+        max: 15,
+        require: true,
+        default: "ADM001"
+    },
+    studentClassRollNo: {
+        type: String,
+        min: 3,
+        max: 15,
+        require: true,
+        default: "ADMCR001"
+    },
+    studentExamRollNo: {
+        type: String,
+        min: 3,
+        max: 15,
+        require: true,
+        default: "ADMER001"
+    },
+    class: {
         type: String,
         min: 3,
         max: 15,
     },
-    studentId: {
+    section: {
         type: String,
         min: 3,
         max: 15,

@@ -17,7 +17,11 @@ router.post("/register", async (req, res) => {
     const newuser = await new User({
       userType: req.body.userType,
       userFullName: req.body.userFullName,
-      admissionId: req.body.admissionId,
+      admissionNo: req.body.admissionId,
+      studentExamRollNo: req.body.studentExamRollNo,
+      studentClassRollNo: req.body.studentClassRollNo,
+      class: req.body.class,
+      section:req.body.section,
       employeeId: req.body.employeeId,
       age: req.body.age,
       dob: req.body.dob,
