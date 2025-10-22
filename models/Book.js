@@ -11,7 +11,7 @@ const BookSchema = new mongoose.Schema({
         default:0,
     },
     alternateTitle:{
-        type:String,
+        type:String,    
         default:""
     },
     author:{
@@ -26,6 +26,10 @@ const BookSchema = new mongoose.Schema({
         type:String,
         default:""
     },
+    donatedBy:{
+        type:String,
+        default:""
+    },
     bookCountAvailable:{
         type:Number,
         required:true
@@ -35,8 +39,9 @@ const BookSchema = new mongoose.Schema({
         default:"Available"
     },
     bookPrice:{
-        type: mongoose.Schema.Types.Decimal128,
-        default:100.00
+        type: Number,
+        default:100.00,
+        
     },
     categories:[{ 
         type: mongoose.Types.ObjectId, 

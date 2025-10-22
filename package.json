@@ -21,5 +21,13 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.12"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veenadevi/tn_lms_backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/veenadevi/tn_lms_backend/issues"
+  },
+  "homepage": "https://github.com/veenadevi/tn_lms_backend#readme"
 }

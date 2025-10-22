@@ -4,6 +4,24 @@ import BookCategory from "../models/BookCategory.js"
 
 const router = express.Router()
 
+// Helper: convert Decimal128 / {$numberDecimal: "..."} -> plain string
+// const normalizeBook = (book) => {
+//     let obj = book
+//     if (book && typeof book.toObject === "function") obj = book.toObject()
+//     else obj = { ...book }
+
+//     // if (obj && obj.bookPrice != null) {
+//     //     if (obj.bookPrice && obj.bookPrice.$numberDecimal) {
+//     //         obj.bookPrice = obj.bookPrice.$numberDecimal
+//     //     } else if (typeof obj.bookPrice.toString === "function") {
+//     //         obj.bookPrice = obj.bookPrice.toString()
+//     //     } else {
+//     //         obj.bookPrice = String(obj.bookPrice)
+//     //     }
+//     // }
+//     return obj
+// }
+
 /* Get all books in the db */
 router.get("/allbooks", async (req, res) => {
     try {
@@ -94,13 +112,15 @@ router.post("/addbook", async (req, res) => {
                 author: b.author,
                 bookCountAvailable: b.bookCountAvailable,
                 language: b.language,
-                bookPrice: b.bookPrice ?? b.price,
+                bookPrice: b.bookPrice,
                 publisher: b.publisher,
-                bookStatus: b.bookStatus ?? b.bookSatus,
+                donatedBy: b.donatedBy,
+                bookStatus: b.bookStatus,
                 categories: b.categories
             })
             const saved = await newbook.save()
             await BookCategory.updateMany({ '_id': saved.categories }, { $push: { books: saved._id } })
+
             return res.status(200).json({ inserted: [saved], skipped: [] })
         } else {
             console.log("booksInput array", booksInput.length)
@@ -130,9 +150,10 @@ router.post("/addbook", async (req, res) => {
                     author: b.author,
                     bookCountAvailable: b.bookCountAvailable,
                     language: b.language,
-                    bookPrice: b.bookPrice ?? b.price,
+                    bookPrice: b.bookPrice,
                     publisher: b.publisher,
-                    bookStatus: b.bookStatus ?? b.bookSatus,
+                    donatedBy: b.donatedBy,
+                    bookStatus: b.bookStatus,
                     categories: b.categories
                 }))
 
@@ -143,7 +164,8 @@ router.post("/addbook", async (req, res) => {
                     inserted.map(book => BookCategory.updateMany({ '_id': book.categories }, { $push: { books: book._id } }))
                 )
 
-                return res.status(200).json({ inserted, skipped })
+                //const normalized = inserted.map(normalizeBook)
+                return res.status(200).json({ inserted: inserted, skipped })
             }
         }
     } catch (err) {

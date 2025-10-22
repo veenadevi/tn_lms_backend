@@ -13,8 +13,8 @@ const UserSchema = new mongoose.Schema({
         type: String,
         min: 3,
         max: 15,
-        require: true,
-        default: "ADM001"
+        require: true
+       
     },
     studentClassRollNo: {
         type: String,
@@ -63,9 +63,8 @@ const UserSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        require: true,
-        max: 50,
-        unique: true
+        max: 60,
+        default: "tnschool@gmail.com"
     },
     password: {
         type: String,

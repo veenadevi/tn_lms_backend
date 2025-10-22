@@ -7,6 +7,7 @@ import userRoutes from "./routes/users.js";
 import bookRoutes from "./routes/books.js";
 import transactionRoutes from "./routes/transactions.js";
 import categoryRoutes from "./routes/categories.js";
+import uploadContentRoutes from "./routes/uploadContent.js";
 
 /* App Config */
 dotenv.config();
@@ -23,6 +24,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/uploadContent", uploadContentRoutes);
 
 /* MongoDB connection */
 console.log("=========DB_URL============",process.env.MONGO_URL);
