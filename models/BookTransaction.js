@@ -13,6 +13,11 @@ const BookTransactionSchema = new mongoose.Schema({
         type: String,
         require: true
     },
+    borrowerAdmissionNo:
+    {
+        type: String,
+        require: true
+    },
     borrowerName: {
         type: String,
         require: true

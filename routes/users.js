@@ -6,6 +6,7 @@ const router = express.Router()
 /* Getting user by id */
 router.get("/getuser/:id", async (req, res) => {
     try {
+        console.log("Fetching user with id:", req.params.id);
         const user = await User.findById(req.params.id).populate("activeTransactions").populate("prevTransactions")
         const { password, updatedAt, ...other } = user._doc;
         res.status(200).json(other);

@@ -12,6 +12,7 @@ router.post("/add-transaction", async (req, res) => {
                 borrowerId: req.body.borrowerId,
                 bookName: req.body.bookName,
                 borrowerName: req.body.borrowerName,
+                borrowerAdmissionNo: req.body.borrowerAdmissionNo,
                 transactionType: req.body.transactionType,
                 fromDate: req.body.fromDate,
                 toDate: req.body.toDate
@@ -30,9 +31,37 @@ router.post("/add-transaction", async (req, res) => {
     }
 })
 
+
+
 router.get("/all-transactions", async (req, res) => {
     try {
+
+        // console.log("Fetching all transactions");
         const transactions = await BookTransaction.find({}).sort({ _id: -1 })
+        res.status(200).json(transactions)
+    }
+    catch (err) {
+        return res.status(504).json(err)
+    }
+})
+
+router.get("/allActive-transactions", async (req, res) => {
+    try {
+
+        console.log("Fetching all active transactions");
+        const transactions = await BookTransaction.find({ status: "Active" }).sort({ _id: -1 })
+        res.status(200).json(transactions)
+    }
+    catch (err) {
+        return res.status(504).json(err)
+    }
+})
+
+router.get("/allArchived-transactions", async (req, res) => {
+    try {
+
+        console.log("Fetching all archived transactions");
+        const transactions = await BookTransaction.find({ status: "Completed" }).sort({ _id: -1 })
         res.status(200).json(transactions)
     }
     catch (err) {
@@ -42,15 +71,31 @@ router.get("/all-transactions", async (req, res) => {
 
 router.put("/update-transaction/:id", async (req, res) => {
     try {
+        console.log("is admin===<",req.body.isAdmin)
+        console.log("req.params.id===<",req.params.id)
         if (req.body.isAdmin) {
+            // Find the transaction to get the bookId
+            const transaction = await BookTransaction.findById(req.params.id);
+            if (!transaction) {
+                return res.status(404).json("Transaction not found");
+            }
+
+            // Update the transaction details
             await BookTransaction.findByIdAndUpdate(req.params.id, {
                 $set: req.body,
             });
-            res.status(200).json("Transaction details updated successfully");
+
+            // Update the book's available count (increment by 1)
+            // await Book.findByIdAndUpdate(transaction.bookId, {
+            //     $inc: { bookCountAvailable: 1 },
+            // });
+
+            res.status(200).json("Transaction details updated successfully and book count incremented");
+        } else {
+            res.status(403).json("You don't have permission to update this transaction");
         }
-    }
-    catch (err) {
-        res.status(504).json(err)
+    } catch (err) {
+        res.status(504).json(err);
     }
 })
 
